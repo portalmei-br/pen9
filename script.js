@@ -941,4 +941,3 @@ function setupScrollAnimations() {
     const animatedElements = document.querySelectorAll('.step-card, .feature-card, .testimonial-card');
     animatedElements.forEach(el => observer.observe(el));
 }
-
