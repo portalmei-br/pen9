@@ -253,6 +253,22 @@ function initializeApp() {
             handleSearch();
         }
     });
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+function initializeApp() {
+    console.log('Inicializando aplicação...');
+    
+    // Event listeners para busca
+    searchBtn.addEventListener('click', handleSearch);
+    cepInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    });
     
     // Event listener para obter localização atual
     getLocationBtn.addEventListener('click', getCurrentLocation);
@@ -561,17 +577,17 @@ function searchPeneiras(location) {
             
             return {
                 ...peneira,
-                distancia: distance
+                distancia: Math.round(distance * 10) / 10
             };
-        }).filter(peneira => peneira.distancia <= 100); // Filtrar peneiras até 100km
+        }).sort((a, b) => a.distancia - b.distancia);
         
-        currentResults = results;
+        // Filtrar apenas peneiras em um raio de 100km
+        currentResults = results.filter(peneira => peneira.distancia <= 100);
         
         hideLoading();
-        displayResults(results);
+        displayResults(currentResults);
         
     } catch (error) {
-        console.error('Erro ao buscar peneiras:', error);
         hideLoading();
         showNotification('Erro ao buscar peneiras. Tente novamente.', 'error');
     }
@@ -580,150 +596,39 @@ function searchPeneiras(location) {
 // Função simulada de geocodificação
 function geocodeLocation(location) {
     // Coordenadas simuladas baseadas na localização
-    const locations = {
-        'São Paulo, SP': { lat: -23.5505, lng: -46.6333 },
-        'Rio de Janeiro, RJ': { lat: -22.9068, lng: -43.1729 },
-        'Belo Horizonte, MG': { lat: -19.9167, lng: -43.9345 },
-        'Porto Alegre, RS': { lat: -30.0346, lng: -51.2177 }
+    const locationMap = {
+        'são paulo': { lat: -23.5505, lng: -46.6333 },
+        'rio de janeiro': { lat: -22.9068, lng: -43.1729 },
+        'belo horizonte': { lat: -19.9167, lng: -43.9345 },
+        'porto alegre': { lat: -30.0346, lng: -51.2177 },
+        'salvador': { lat: -12.9714, lng: -38.5014 },
+        'brasília': { lat: -15.8267, lng: -47.9218 },
+        'santos': { lat: -23.9618, lng: -46.3322 },
+        'campinas': { lat: -22.9056, lng: -47.0608 }
     };
     
-    return locations[location] || { lat: -23.5505, lng: -46.6333 }; // Default para São Paulo
-}
-
-// Função para exibir resultados
-function displayResults(results) {
-    resultsSection.style.display = 'block';
-    resultsSection.scrollIntoView({ behavior: 'smooth' });
+    const normalizedLocation = location.toLowerCase();
     
-    if (results.length === 0) {
-        resultsContainer.style.display = 'none';
-        noResults.style.display = 'block';
-        return;
+    // Procurar por correspondência parcial
+    for (const [key, coords] of Object.entries(locationMap)) {
+        if (normalizedLocation.includes(key) || key.includes(normalizedLocation.split(',')[0].trim().toLowerCase())) {
+            return coords;
+        }
     }
     
-    resultsContainer.style.display = 'grid';
-    noResults.style.display = 'none';
-    
-    resultsContainer.innerHTML = results.map(peneira => createResultCard(peneira)).join('');
-    
-    // Adicionar animação aos cards
-    const cards = resultsContainer.querySelectorAll('.result-card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            card.style.transition = 'all 0.5s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-}
-
-// Função para criar card de resultado
-function createResultCard(peneira) {
-    const statusClass = peneira.status === 'aberta' ? 'status-open' : 'status-closed';
-    const statusText = peneira.status === 'aberta' ? 'Aberta' : 'Encerrada';
-    
-    // Formatar data para exibição
-    const dataFormatada = new Date(peneira.data).toLocaleDateString('pt-BR');
-    
-    return `
-        <div class="result-card" data-id="${peneira.id}">
-            <div class="card-header">
-                <div class="card-title-section">
-                    <h3 class="card-title">${peneira.titulo}</h3>
-                    <p class="card-club">${peneira.clube}</p>
-                </div>
-                <div class="card-badges">
-                    <span class="distance-badge">${peneira.distancia.toFixed(1)} km</span>
-                    <span class="status-badge ${statusClass}">${statusText}</span>
-                </div>
-            </div>
-            
-            <div class="card-content">
-                <div class="card-info-grid">
-                    <div class="info-item">
-                        <i class="fas fa-calendar-alt info-icon"></i>
-                        <div class="info-content">
-                            <span class="info-label">Data</span>
-                            <span class="info-value">${dataFormatada}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-clock info-icon"></i>
-                        <div class="info-content">
-                            <span class="info-label">Horário</span>
-                            <span class="info-value">${peneira.horario}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-map-marker-alt info-icon"></i>
-                        <div class="info-content">
-                            <span class="info-label">Local</span>
-                            <span class="info-value">${peneira.endereco || 'Endereço não disponível'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-users info-icon"></i>
-                        <div class="info-content">
-                            <span class="info-label">Categoria</span>
-                            <span class="info-value">${peneira.categoria}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-details">
-                    <p class="card-requirements">
-                        <i class="fas fa-info-circle"></i>
-                        ${peneira.requisitos}
-                    </p>
-                    
-                    <div class="card-availability">
-                        <div class="availability-bar">
-                            <div class="availability-fill" style="width: ${(peneira.vagasDisponiveis / peneira.totalVagas) * 100}%"></div>
-                        </div>
-                        <span class="availability-text">
-                            ${peneira.vagasDisponiveis} de ${peneira.totalVagas} vagas disponíveis
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="card-actions">
-                    <button class="btn-contact" onclick="window.open('tel:${peneira.contato}')">
-                        <i class="fas fa-phone"></i>
-                        Contato
-                    </button>
-                    <button class="btn-details" onclick="showPeneiraDetails(${peneira.id})">
-                        <i class="fas fa-info-circle"></i>
-                        Mais Detalhes
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Função para mostrar detalhes da peneira
-function showPeneiraDetails(id) {
-    const peneira = peneirasData.find(p => p.id === id);
-    if (!peneira) return;
-    
-    // Aqui você pode implementar um modal ou redirecionamento
-    alert(`Detalhes da peneira:\n\nClube: ${peneira.clube}\nTítulo: ${peneira.titulo}\nData: ${new Date(peneira.data).toLocaleDateString('pt-BR')}\nHorário: ${peneira.horario}\nContato: ${peneira.contato}`);
+    // Retornar São Paulo como padrão
+    return locationMap['são paulo'];
 }
 
 // Função para definir filtro ativo
 function setActiveFilter(filter) {
-    currentFilter = filter;
     filterBtns.forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-filter') === filter) {
             btn.classList.add('active');
         }
     });
+    currentFilter = filter;
 }
 
 // Função para aplicar filtro
@@ -745,28 +650,297 @@ function applyFilter(filter) {
     displayResults(filteredResults);
 }
 
-// Função para mostrar loading
-function showLoading(withAddress = false) {
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'flex';
-        if (withAddress && loadingAddress) {
-            loadingAddress.style.display = 'block';
-        }
+// Função para exibir resultados
+function displayResults(results) {
+    resultsSection.style.display = 'block';
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+    
+    if (results.length === 0) {
+        resultsContainer.style.display = 'none';
+        noResults.style.display = 'block';
+        return;
     }
+    
+    noResults.style.display = 'none';
+    resultsContainer.style.display = 'grid';
+    resultsContainer.innerHTML = '';
+    
+    // Criar cards
+    results.forEach((peneira, index) => {
+        const resultCard = createResultCard(peneira);
+        resultsContainer.appendChild(resultCard);
+        
+        // Animação escalonada
+        setTimeout(() => {
+            resultCard.classList.add('animate-fade-in-up');
+        }, index * 100);
+    });
+}
+
+// FUNÇÃO MODIFICADA PARA CRIAR CARD DE RESULTADO - COM BOTÃO "QUERO PARTICIPAR"
+function createResultCard(peneira) {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    
+    const dataFormatada = formatDate(peneira.data);
+    const prazoFormatado = formatDate(peneira.prazoInscricao);
+    const distanciaTexto = peneira.distancia < 1 ? 
+        `${Math.round(peneira.distancia * 1000)}m` : 
+        `${peneira.distancia}km`;
+    
+    // Determinar status e informações de vagas de forma mais elegante
+    const statusInfo = getStatusInfo(peneira);
+    const vagasInfo = getVagasInfo(peneira);
+    const prazoInfo = getPrazoInfo(peneira);
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="card-title-section">
+                <h3 class="card-title">${peneira.titulo}</h3>
+                <p class="card-club">${peneira.clube}</p>
+            </div>
+            <div class="card-badges">
+                <span class="distance-badge">${distanciaTexto}</span>
+                ${statusInfo.badge}
+            </div>
+        </div>
+        
+        ${statusInfo.banner}
+        
+        <div class="card-content">
+            <div class="event-details">
+                <div class="detail-row primary">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>${dataFormatada} às ${peneira.horario}</span>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${peneira.endereco || 'Endereço será definido após busca'}</span>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-users"></i>
+                    <span>${peneira.categoria}</span>
+                </div>
+            </div>
+            
+            ${vagasInfo.html}
+            ${prazoInfo.html}
+        </div>
+        
+        <div class="card-actions">
+            ${peneira.status === 'aberta' ? `
+                <button class="btn-primary" onclick="openPeneiraModal(${peneira.id})">
+                    <i class="fas fa-futbol"></i>
+                    <span>Quero Participar</span>
+                </button>
+            ` : `
+                <button class="btn-disabled" disabled>
+                    <i class="fas fa-lock"></i>
+                    <span>Encerrada</span>
+                </button>
+            `}
+        </div>
+    `;
+    
+    // Adicionar classe de status ao card
+    card.classList.add(`card-${peneira.status}`);
+    
+    return card;
+}
+
+// Função refinada para obter informações de status
+function getStatusInfo(peneira) {
+    if (peneira.status === 'encerrada') {
+        return {
+            badge: '<span class="status-badge status-closed">Encerrada</span>',
+            banner: '<div class="status-banner closed"><i class="fas fa-times-circle"></i><span>Inscrições Encerradas</span></div>'
+        };
+    }
+    
+    // Para peneiras abertas, mostrar badge de disponibilidade baseado nas vagas
+    let availabilityBadge = '';
+    if (peneira.vagasDisponiveis <= 5) {
+        availabilityBadge = '<span class="status-badge status-urgent">Últimas Vagas</span>';
+    } else if (peneira.vagasDisponiveis <= 10) {
+        availabilityBadge = '<span class="status-badge status-limited">Vagas Limitadas</span>';
+    } else {
+        availabilityBadge = '<span class="status-badge status-open">Disponível</span>';
+    }
+    
+    return {
+        badge: availabilityBadge,
+        banner: ''
+    };
+}
+
+// Função refinada para obter informações de vagas
+function getVagasInfo(peneira) {
+    if (peneira.status !== 'aberta') {
+        return { html: '' };
+    }
+    
+    const percentualOcupado = ((peneira.totalVagas - peneira.vagasDisponiveis) / peneira.totalVagas) * 100;
+    
+    return {
+        html: `
+            <div class="availability-section">
+                <div class="availability-header">
+                    <span class="availability-label">Disponibilidade</span>
+                    <span class="availability-count">${peneira.vagasDisponiveis} de ${peneira.totalVagas} vagas</span>
+                </div>
+                <div class="availability-bar">
+                    <div class="availability-progress" style="width: ${percentualOcupado}%"></div>
+                </div>
+            </div>
+        `
+    };
+}
+
+// Função refinada para obter informações de prazo
+function getPrazoInfo(peneira) {
+    if (peneira.status !== 'aberta') {
+        return { html: '' };
+    }
+    
+    const diasRestantes = getDiasRestantes(peneira.prazoInscricao);
+    const prazoFormatado = formatDate(peneira.prazoInscricao);
+    
+    return {
+        html: `
+            <div class="deadline-section">
+                <div class="deadline-info">
+                    <i class="fas fa-clock"></i>
+                    <div class="deadline-text">
+                        <span class="deadline-label">Prazo de inscrição</span>
+                        <span class="deadline-date">${prazoFormatado}</span>
+                        <span class="deadline-remaining">${diasRestantes}</span>
+                    </div>
+                </div>
+            </div>
+        `
+    };
+}
+
+// Função para calcular dias restantes
+function getDiasRestantes(prazoInscricao) {
+    const hoje = new Date();
+    const prazo = new Date(prazoInscricao);
+    const diffTime = prazo - hoje;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+        return 'Prazo expirado';
+    } else if (diffDays === 0) {
+        return 'Último dia!';
+    } else if (diffDays === 1) {
+        return 'Termina amanhã';
+    } else if (diffDays <= 7) {
+        return `${diffDays} dias restantes`;
+    } else {
+        return `${diffDays} dias restantes`;
+    }
+}
+
+// Função para formatar data
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    return date.toLocaleDateString('pt-BR', options);
+}
+
+// NOVA FUNÇÃO: Abrir modal com informações da peneira
+function openPeneiraModal(peneiraId) {
+    const peneira = peneirasData.find(p => p.id === peneiraId);
+    if (!peneira) return;
+    
+    // Preencher informações do modal
+    document.getElementById('modal-title').textContent = peneira.titulo;
+    document.getElementById('modal-clube').textContent = peneira.clube;
+    document.getElementById('modal-data-horario').textContent = `${formatDate(peneira.data)} às ${peneira.horario}`;
+    document.getElementById('modal-endereco').textContent = peneira.endereco || 'Endereço será definido após busca';
+    document.getElementById('modal-categoria').textContent = peneira.categoria;
+    document.getElementById('modal-requisitos').textContent = peneira.requisitos;
+    document.getElementById('modal-contato').textContent = peneira.contato;
+    document.getElementById('modal-prazo').textContent = formatDate(peneira.prazoInscricao);
+    
+    // Informações de vagas (apenas para peneiras abertas)
+    if (peneira.status === 'aberta') {
+        const percentualOcupado = ((peneira.totalVagas - peneira.vagasDisponiveis) / peneira.totalVagas) * 100;
+        document.getElementById('modal-vagas').textContent = `${peneira.vagasDisponiveis} vagas disponíveis de ${peneira.totalVagas} total`;
+        document.getElementById('modal-availability-progress').style.width = `${percentualOcupado}%`;
+        document.getElementById('modal-vagas-info').style.display = 'block';
+    } else {
+        document.getElementById('modal-vagas-info').style.display = 'none';
+    }
+    
+    // Mostrar modal
+    const modal = document.getElementById('peneira-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Fechar modal ao clicar fora dele
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closePeneiraModal();
+        }
+    });
+}
+
+// NOVA FUNÇÃO: Fechar modal
+function closePeneiraModal() {
+    const modal = document.getElementById('peneira-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Event listener para fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePeneiraModal();
+    }
+});
+
+// Função para mostrar loading
+function showLoading(isCepSearch = false) {
+    if (!isCepSearch) {
+        loadingAddress.textContent = 'Buscando peneiras...';
+    }
+    loadingOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 // Função para esconder loading
 function hideLoading() {
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'none';
-    }
+    loadingOverlay.style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
 
-// Função para mostrar notificação
+// Função para mostrar notificações
 function showNotification(message, type = 'info') {
-    // Implementação simples com alert - pode ser melhorada com toast/modal
-    console.log(`${type.toUpperCase()}: ${message}`);
-    alert(message);
+    // Remover notificação existente
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    const container = document.getElementById('notification-container');
+    container.appendChild(notification);
+    
+    // Remover notificação após 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 // Função para configurar animações de scroll
@@ -779,7 +953,8 @@ function setupScrollAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
+                entry.target.classList.add('animate-fade-in-up');
+                observer.unobserve(entry.target);
             }
         });
     }, observerOptions);
@@ -788,4 +963,3 @@ function setupScrollAnimations() {
     const animatedElements = document.querySelectorAll('.step-card, .feature-card, .testimonial-card');
     animatedElements.forEach(el => observer.observe(el));
 }
-
