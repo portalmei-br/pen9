@@ -1,47 +1,44 @@
-// Função para calcular o segundo sábado a partir de uma data
-function getSecondSaturday(startDate) {
-    const date = new Date(startDate);
+// Função para calcular o segundo sábado a partir da data atual
+function calcularSegundoSabado() {
+    const hoje = new Date();
+    const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     
-    // Encontrar o primeiro sábado estritamente APÓS a data de início
-    // Se a data de início for um sábado, o primeiro sábado 'que vem' é o da próxima semana.
-    // Se não for sábado, é o próximo sábado.
-    
-    // Calcular dias até o próximo sábado (6 é sábado no JavaScript: 0=domingo, 1=segunda, ..., 6=sábado)
-    let daysUntilNextSaturday = (6 - date.getDay() + 7) % 7;
-    
-    // Se a data de início já for sábado, daysUntilNextSaturday será 0. 
-    // Precisamos que seja 7 para pegar o sábado da próxima semana.
-    if (daysUntilNextSaturday === 0) {
-        daysUntilNextSaturday = 7;
+    // Encontrar o primeiro sábado do mês
+    let primeiroSabado = new Date(primeiroDiaDoMes);
+    while (primeiroSabado.getDay() !== 6) { // 6 = sábado
+        primeiroSabado.setDate(primeiroSabado.getDate() + 1);
     }
-        
-    const firstSaturdayAfterStart = new Date(date);
-    firstSaturdayAfterStart.setDate(date.getDate() + daysUntilNextSaturday);
     
-    // O segundo sábado é 7 dias depois do primeiro sábado APÓS a data de início
-    const secondSaturdayAfterStart = new Date(firstSaturdayAfterStart);
-    secondSaturdayAfterStart.setDate(firstSaturdayAfterStart.getDate() + 7);
+    // Calcular o segundo sábado (7 dias após o primeiro)
+    const segundoSabado = new Date(primeiroSabado);
+    segundoSabado.setDate(primeiroSabado.getDate() + 7);
     
-    return secondSaturdayAfterStart.toISOString().split('T')[0]; // Retorna no formato YYYY-MM-DD
+    // Se o segundo sábado já passou, calcular para o próximo mês
+    if (segundoSabado < hoje) {
+        const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        let primeiroSabadoProximoMes = new Date(proximoMes);
+        while (primeiroSabadoProximoMes.getDay() !== 6) {
+            primeiroSabadoProximoMes.setDate(primeiroSabadoProximoMes.getDate() + 1);
+        }
+        const segundoSabadoProximoMes = new Date(primeiroSabadoProximoMes);
+        segundoSabadoProximoMes.setDate(primeiroSabadoProximoMes.getDate() + 7);
+        return segundoSabadoProximoMes;
+    }
+    
+    return segundoSabado;
 }
 
-// Função para atualizar todas as datas das peneiras para o segundo sábado
-function updatePeneirasDates() {
-    const today = new Date().toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD
-    const secondSaturday = getSecondSaturday(today);
-    
-    console.log(`Data atual: ${today}`);
-    console.log(`Segundo sábado calculado: ${secondSaturday}`);
-    
-    // Atualizar todas as peneiras para a data do segundo sábado
-    peneirasData.forEach((peneira, index) => {
-        const oldDate = peneira.data;
-        peneira.data = secondSaturday;
-        console.log(`Peneira ${index + 1} (${peneira.clube}): ${oldDate} → ${secondSaturday}`);
-    });
-    
-    return secondSaturday;
+// Função para formatar data no formato YYYY-MM-DD
+function formatarDataParaString(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
 }
+
+// Calcular a data do segundo sábado
+const dataSegundoSabado = calcularSegundoSabado();
+const dataSegundoSabadoString = formatarDataParaString(dataSegundoSabado);
 
 // Dados simulados de peneiras de futebol - VERSÃO SIMPLIFICADA
 const peneirasData = [
@@ -50,7 +47,7 @@ const peneirasData = [
         titulo: "Peneira Sub-15 e Sub-17",
         clube: "Santos FC",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-08-15",
+        data: dataSegundoSabadoString,
         horario: "14:00",
         categoria: "Sub-15, Sub-17",
         requisitos: "Idade entre 13-17 anos",
@@ -61,7 +58,7 @@ const peneirasData = [
         status: "aberta",
         vagasDisponiveis: 8,
         totalVagas: 50,
-        prazoInscricao: "2024-08-10",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: false
     },
     {
@@ -69,7 +66,7 @@ const peneirasData = [
         titulo: "Peneira Categoria de Base",
         clube: "São Paulo FC",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-08-20",
+        data: dataSegundoSabadoString,
         horario: "09:00",
         categoria: "Sub-13, Sub-15",
         requisitos: "Idade entre 11-15 anos",
@@ -80,7 +77,7 @@ const peneirasData = [
         status: "encerrada",
         vagasDisponiveis: 0,
         totalVagas: 40,
-        prazoInscricao: "2024-08-15",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: true
     },
     {
@@ -88,7 +85,7 @@ const peneirasData = [
         titulo: "Peneira Feminina",
         clube: "Corinthians",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-08-25",
+        data: dataSegundoSabadoString,
         horario: "15:30",
         categoria: "Sub-16, Sub-18",
         requisitos: "Idade entre 14-18 anos (feminino)",
@@ -99,7 +96,7 @@ const peneirasData = [
         status: "aberta",
         vagasDisponiveis: 3,
         totalVagas: 30,
-        prazoInscricao: "2024-08-20",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: false
     },
     {
@@ -107,7 +104,7 @@ const peneirasData = [
         titulo: "Peneira Juvenil",
         clube: "Palmeiras",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-09-01",
+        data: dataSegundoSabadoString,
         horario: "10:00",
         categoria: "Sub-17, Sub-20",
         requisitos: "Idade entre 15-20 anos",
@@ -118,7 +115,7 @@ const peneirasData = [
         status: "aberta",
         vagasDisponiveis: 15,
         totalVagas: 60,
-        prazoInscricao: "2024-08-28",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: false
     },
     {
@@ -126,7 +123,7 @@ const peneirasData = [
         titulo: "Peneira Regional",
         clube: "Red Bull Bragantino",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-09-05",
+        data: dataSegundoSabadoString,
         horario: "13:00",
         categoria: "Sub-14, Sub-16",
         requisitos: "Idade entre 12-16 anos",
@@ -137,7 +134,7 @@ const peneirasData = [
         status: "encerrada",
         vagasDisponiveis: 0,
         totalVagas: 25,
-        prazoInscricao: "2024-09-01",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: true
     },
     {
@@ -145,7 +142,7 @@ const peneirasData = [
         titulo: "Peneira Escolar",
         clube: "Ponte Preta",
         endereco: null, // Será preenchido com o CEP do usuário
-        data: "2024-09-10",
+        data: dataSegundoSabadoString,
         horario: "14:30",
         categoria: "Sub-13, Sub-15",
         requisitos: "Idade entre 11-15 anos",
@@ -156,7 +153,7 @@ const peneirasData = [
         status: "aberta",
         vagasDisponiveis: 22,
         totalVagas: 35,
-        prazoInscricao: "2024-09-07",
+        prazoInscricao: dataSegundoSabadoString,
         inscricaoEncerrada: false
     }
 ];
@@ -234,25 +231,6 @@ const backToTopBtn = document.getElementById('back-to-top');
 const navToggle = document.getElementById('nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
 const header = document.querySelector('.header');
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Atualizar as datas das peneiras para o segundo sábado ao carregar a página
-    updatePeneirasDates();
-    
-    initializeApp();
-});
-
-function initializeApp() {
-    console.log('Inicializando aplicação...');
-    
-    // Event listeners para busca
-    searchBtn.addEventListener('click', handleSearch);
-    cepInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    });
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
@@ -963,3 +941,4 @@ function setupScrollAnimations() {
     const animatedElements = document.querySelectorAll('.step-card, .feature-card, .testimonial-card');
     animatedElements.forEach(el => observer.observe(el));
 }
+
